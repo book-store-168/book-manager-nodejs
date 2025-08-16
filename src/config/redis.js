@@ -1,25 +1,11 @@
-const session = require('express-session');
-const redis = require('./redis');
-const { SESSION_SECRET, NODE_ENV } = require('./env');
+const { createClient } = require('redis');
+require('dotenv').config();
 
-// 👇 sửa chỗ này
-const { RedisStore } = require('connect-redis');
+const client = createClient({ url: process.env.REDIS_URL });
+client.on('error', (err) => console.error('Redis error:', err));
 
-const isProd = NODE_ENV === 'production';
+(async () => {
+    if (!client.isOpen) await client.connect();
+})();
 
-// Tạo store
-const store = new RedisStore({ client: redis });
-
-module.exports = session({
-    store,
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: isProd,
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
-    }
-});
-
+module.exports = client;
