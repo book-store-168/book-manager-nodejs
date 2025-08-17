@@ -1,69 +1,63 @@
-// Nạp evn ở root dự án, dùng thư viện dotenv để đọc file .env nằm ở root dự án
-// process.cwd() → thư mục hiện tại khi chạy app
-// path.resolve(...) → tạo đường dẫn tuyệt đối đến file .env
-// Nhờ vậy, tất cả biến trong .env sẽ có trong process.env
+// src/config/env.js
 const path = require('path');
-require('dotenv').config();
+const dotenv = require('dotenv');
 
-// Hàm tiện ích lấy biến môi trường
-// Lấy biến môi trường process.env[name]
-// Nếu không tồn tại → trả về giá trị mặc định def
-function get(name, def = undefined) {
-    const v = process.env[name];
-    return v !== undefined ? v : def;
-}
-// Lấy biến và ép kiểu số (Number)
-// Nếu không phải số → báo lỗi (giúp tránh bug khi PORT/DB_PORT bị nhập nhầm thành chữ)
-function getNumber(name, def) {
-    const v = Number(get(name, def));
-    if (Number.isNaN(v)) throw new Error(`Env ${name} must be a number`);
-    return v;
-}
-// Bắt buộc phải có biến (như SESSION_SECRET, DB_USER, DB_NAME)
-// Nếu thiếu → throw Error, app sẽ không khởi động được (tránh lỗi bảo mật).
+// Load .env duy nhất 1 lần
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+// Helper bắt buộc có biến
 function requireEnv(name) {
-    const v = get(name);
-    if (v === undefined || v === '') {
+    const v = process.env[name];
+    if (v === undefined || v === null || v === '') {
         throw new Error(`Missing required env: ${name}`);
     }
     return v;
 }
-const config = {
+
+const toBool = (v, def = false) => {
+    if (v === undefined) return def;
+    return ['1', 'true', 'yes', 'y', 'on'].includes(String(v).toLowerCase());
+};
+
+const toInt = (v, def) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : def;
+};
+
+module.exports = {
     // App
-    PORT: getNumber('PORT', 3000),
-    NODE_ENV: get('NODE_ENV', 'development'),
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    PORT: toInt(process.env.PORT, 3000),
+    HOST: process.env.HOST || '0.0.0.0',
     SESSION_SECRET: requireEnv('SESSION_SECRET'),
 
     // MySQL
     DB_HOST: requireEnv('DB_HOST'),
-    DB_PORT: getNumber('DB_PORT', 3306),
+    DB_PORT: toInt(process.env.DB_PORT, 3306),
     DB_USER: requireEnv('DB_USER'),
-    DB_PASS: get('DB_PASS', ''),          // cho phép rỗng
+    DB_PASSWORD: requireEnv('DB_PASS'), // map từ DB_PASS trong .env
     DB_NAME: requireEnv('DB_NAME'),
 
     // Redis
-    REDIS_HOST: get('REDIS_HOST', '127.0.0.1'),
-    REDIS_PORT: getNumber('REDIS_PORT', 6379),
+    REDIS_URL:
+        process.env.REDIS_URL ||
+        `redis://${process.env.REDIS_HOST || '127.0.0.1'}:${process.env.REDIS_PORT || '6379'}`,
 
-    // SMTP (OTP)
-    SMTP_HOST: get('SMTP_HOST', 'smtp.gmail.com'),
-    SMTP_PORT: getNumber('SMTP_PORT', 587),
-    SMTP_USER: get('SMTP_USER'),
-    SMTP_PASS: get('SMTP_PASS'),
-    MAIL_FROM: get('MAIL_FROM'),
+    // SMTP (mail gửi OTP)
+    SMTP_HOST: requireEnv('SMTP_HOST'),
+    SMTP_PORT: toInt(process.env.SMTP_PORT, 587),
+    SMTP_SECURE: toBool(process.env.SMTP_SECURE, false), // mặc định false nếu không khai báo
+    SMTP_USER: requireEnv('SMTP_USER'),
+    SMTP_PASS: requireEnv('SMTP_PASS'),
+    MAIL_FROM: requireEnv('MAIL_FROM'),
 
-    // Google OAuth (có thể để trống nếu chưa dùng)
-    GOOGLE_CLIENT_ID: get('GOOGLE_CLIENT_ID'),
-    GOOGLE_CLIENT_SECRET: get('GOOGLE_CLIENT_SECRET'),
-    GOOGLE_CALLBACK_URL: get('GOOGLE_CALLBACK_URL'),
+    // Google OAuth
+    GOOGLE_CLIENT_ID: requireEnv('GOOGLE_CLIENT_ID'),
+    GOOGLE_CLIENT_SECRET: requireEnv('GOOGLE_CLIENT_SECRET'),
+    GOOGLE_CALLBACK_URL: requireEnv('GOOGLE_CALLBACK_URL'),
 
-    // tiện dùng
-    IS_PROD: get('NODE_ENV') === 'production',
+    // OTP
+    OTP_TTL_SECONDS: toInt(process.env.OTP_TTL_SECONDS, 300),
+    OTP_LENGTH: toInt(process.env.OTP_LENGTH, 6),
+    OTP_RESEND_COOLDOWN: toInt(process.env.OTP_RESEND_COOLDOWN, 60),
 };
-
-// Cảnh báo mềm khi thiếu SMTP (dev vẫn chạy, chỉ không gửi mail)
-if (!config.SMTP_USER || !config.SMTP_PASS) {
-    console.warn('[env] SMTP_USER/SMTP_PASS chưa thiết lập — gửi OTP email sẽ thất bại trong môi trường thật.');
-}
-
-module.exports = config;

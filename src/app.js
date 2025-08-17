@@ -1,3 +1,4 @@
+const env = require('./config/env'); // <— import đầu tiên để chắc chắn .env đã load
 const express = require('express');
 const morgan = require('morgan');
 const helmet = require('helmet');
@@ -6,7 +7,6 @@ const cookieParser = require('cookie-parser');
 const sessionMiddleware = require('./config/session');
 const passport = require('./passport/passport');
 const path = require('path');
-require('dotenv').config();
 
 const app = express();
 

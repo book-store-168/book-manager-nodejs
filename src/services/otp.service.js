@@ -1,14 +1,17 @@
+// src/services/otp.service.js (ví dụ)
 const redis = require('../config/redis');
-require('dotenv').config();
+const env = require('../config/env');
 
-const OTP_TTL = Number(process.env.OTP_TTL_SECONDS || 300);
-const OTP_LENGTH = Number(process.env.OTP_LENGTH || 6);
-const RESEND_COOLDOWN = Number(process.env.OTP_RESEND_COOLDOWN || 60);
+const OTP_TTL = env.OTP_TTL_SECONDS;          // số giây sống của OTP
+const OTP_LENGTH = env.OTP_LENGTH;            // độ dài OTP
+const RESEND_COOLDOWN = env.OTP_RESEND_COOLDOWN; // thời gian cooldown giữa 2 lần gửi
 
-function randomOTP(length = 6) {
+function randomOTP(length = OTP_LENGTH) {
     // tạo chuỗi số, đảm bảo độ dài cố định
     let s = '';
-    for (let i = 0; i < length; i++) s += Math.floor(Math.random() * 10);
+    for (let i = 0; i < length; i++) {
+        s += Math.floor(Math.random() * 10);
+    }
     return s;
 }
 
@@ -31,7 +34,7 @@ async function setThrottle(email) {
 }
 
 async function createAndSaveOTP(email) {
-    const code = randomOTP(OTP_LENGTH);
+    const code = randomOTP();
     await redis.set(otpKey(email), code, { EX: OTP_TTL });
     return code;
 }
@@ -49,5 +52,5 @@ module.exports = {
     getOTP,
     deleteOTP,
     canResend,
-    setThrottle
+    setThrottle,
 };
