@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login (simple)</title>
+</head>
+<body>
+<h1>Đăng nhập</h1>
+
+<form id="f">
+  <div>
+    <label>Email</label><br/>
+    <input id="email" type="email" required placeholder="you@example.com"/>
+  </div>
+
+  <div style="margin-top:8px;">
+    <label>Mật khẩu</label><br/>
+    <input id="password" type="password" required placeholder="Mật khẩu"/>
+  </div>
+
+  <div style="margin-top:12px;">
+    <button type="submit">Đăng nhập</button>
+  </div>
+</form>
+
+<!-- Nút đăng nhập Google (redirect toàn trang, không dùng fetch) -->
+<div style="margin-top:12px;">
+  <button id="btnGoogle" type="button">Đăng nhập bằng Google</button>
+</div>
+
+<pre id="out" style="margin-top:12px;background:#f6f6f6;padding:8px;"></pre>
+
+<script src="/js/login.js" defer></script>
+</body>
+</html>

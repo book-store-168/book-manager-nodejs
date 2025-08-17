@@ -1,13 +1,14 @@
-// src/routes/index.js
 const express = require('express');
 const router = express.Router();
+const { ensureAuth } = require('../middlewares/auth.middleware');
+const userCtrl = require('../controllers/user.controller');
 
-// Route đơn lẻ (nếu cần): kiểm tra API root
-router.get('/', (req, res) => res.json({ message: 'Welcome to Book Store API' }));
+router.get('/me', ensureAuth, userCtrl.getMe);
 
-// Mount các nhóm route con
-router.use('/api/categories', require('./category.routes'));
-router.use('/api/books', require('./book.routes')); // có thể thêm sau
+// nhận mọi kiểu gọi từ FE
+router.patch('/me', ensureAuth, userCtrl.updateMe);
+router.put('/me',   ensureAuth, userCtrl.updateMe);
+router.post('/update-profile', ensureAuth, userCtrl.updateMe);
 
 module.exports = router;
 
