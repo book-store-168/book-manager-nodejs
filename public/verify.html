@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Verify OTP (simple)</title>
+</head>
+<body>
+<h1>Xác thực OTP</h1>
+
+<form id="f">
+    <div>
+        <label>Email</label><br/>
+        <input id="email" type="email" required placeholder="you@example.com"/>
+    </div>
+
+    <div style="margin-top:8px;">
+        <label>OTP</label><br/>
+        <input id="otp" type="text" required placeholder="6 chữ số"/>
+    </div>
+
+    <div style="margin-top:12px;">
+        <button id="btnVerify" type="submit">Xác thực</button>
+        <button id="btnResend" type="button" style="margin-left:8px;">Gửi lại OTP</button>
+        <span id="cd" style="margin-left:6px;color:#666;"></span>
+    </div>
+</form>
+
+<pre id="out" style="margin-top:12px;background:#f6f6f6;padding:8px;"></pre>
+
+<script src="/js/verify.js" defer></script>
+</body>
+</html>

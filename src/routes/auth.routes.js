@@ -50,8 +50,8 @@ router.get(
             secure: false, // bật true nếu HTTPS
         });
 
-        // Đảm bảo Set-Cookie được flush xong rồi mới chuyển
-        req.session.save(() => res.redirect('/api/auth/google/success'));
+        // Đảm bảo Set-Cookie được flush xong rồi mới chuyển /api/auth/google/success
+        req.session.save(() => res.redirect('/index.html'));
     }
 );
 
