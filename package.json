@@ -7,7 +7,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "test:register": "jest --runInBand src/test/auth.register.test.js",
+    "test:verifyOtp": "jest --runInBand src/test/auth.verifyOtp.test.js",
+    "test:resendOtp": "jest --runInBand src/test/auth.resendOtp.test.js"
   },
   "keywords": [],
   "author": "",
