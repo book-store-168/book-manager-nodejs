@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
+
+const asyncHandler = require('../utils/asyncHandler');
 const { ensureAuth } = require('../middlewares/auth.middleware');
-const userCtrl = require('../controllers/user.controller');
+const userCtrl = require('../controllers/auth.login.controller');
 
-router.get('/me', ensureAuth, userCtrl.getMe);
+// GET profile (function đơn -> bọc asyncHandler)
+router.get('/profile', ensureAuth, asyncHandler(userCtrl.me));
 
-// nhận mọi kiểu gọi từ FE
-router.patch('/me', ensureAuth, userCtrl.updateMe);
-router.put('/me',   ensureAuth, userCtrl.updateMe);
-router.post('/update-profile', ensureAuth, userCtrl.updateMe);
+// PUT profile (MẢNG middleware -> SPREAD, KHÔNG bọc asyncHandler)
+router.put('/profile', ensureAuth, ...userCtrl.updateProfile);
 
 module.exports = router;
-
