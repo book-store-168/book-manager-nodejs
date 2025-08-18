@@ -37,6 +37,6 @@ module.exports = session({
     cookie: {
         httpOnly: true,
         sameSite: 'lax',
-        secure: env.NODE_ENV === 'production',
+        secure: false,   // ⚠️ ở localhost phải false
     },
 });

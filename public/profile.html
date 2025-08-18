@@ -1,20 +1,29 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Profile (simple)</title>
-</head>
-<body>
-<h1>Hồ sơ</h1>
+<h1>Edit Profile</h1>
+<div id="alert" class="alert d-none"></div>
 
-<div style="margin:8px 0;">
-  <button id="btnLogout">Đăng xuất</button>
-  <a href="/index.html" style="margin-left:8px;">Home</a>
-</div>
+<form id="editProfileForm">
+  <label>Họ tên</label>
+  <input id="name" name="name" required />
 
-<pre id="out" style="background:#f6f6f6;padding:8px;"></pre>
+  <div>Vui lòng nhập họ tên</div>
 
-<script src="/js/profile.js" defer></script>
-</body>
-</html>
+  <label>Email (không đổi ở bước này)</label>
+  <input id="email" name="email" type="email" disabled />
+
+  <label>Số điện thoại</label>
+  <input id="phone" name="phone" />
+
+  <!-- NEW: Ngày sinh -->
+  <label>Ngày sinh</label>
+  <input id="dob" name="dob" type="date" />
+
+  <!-- NEW: Địa chỉ -->
+  <label>Địa chỉ</label>
+  <input id="address" name="address" />
+
+  <button type="submit">Lưu thay đổi</button>
+  <a href="/profile.html">Hủy</a>
+  <a href="/index.html" class="btn btn-secondary">Quay lại</a>
+</form>
+
+<script src="/js/editProfile.js"></script>

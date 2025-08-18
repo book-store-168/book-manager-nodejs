@@ -1,10 +1,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const out = document.getElementById('out');
+    const nav = document.getElementById('nav');
     out.textContent = 'Đang kiểm tra phiên đăng nhập...';
 
     function extractUser(payload) {
         if (!payload || typeof payload !== 'object') return null;
-        if (payload.user) return payload.user;                 // <-- của bạn
+        if (payload.user) return payload.user;
         if (payload.data && payload.data.user) return payload.data.user;
         if (payload.data) return payload.data;
         return payload;
@@ -24,12 +25,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         throw new Error();
     }
 
-    try {
-        const me = await getMe();
-        out.style.color = 'green';
-        out.textContent = 'Đã đăng nhập: ' + (me.email || 'unknown');
-    } catch {
-        out.style.color = '#333';
-        out.textContent = 'Chưa đăng nhập.';
+    async function updateUI() {
+        try {
+            const me = await getMe();
+            out.style.color = 'green';
+            out.textContent = 'Đã đăng nhập: ' + (me.email || 'unknown');
+            nav.innerHTML = `
+                <a href="/profile.html">Profile</a> |
+                <a href="#" id="btnLogout">Đăng xuất</a>
+            `;
+        } catch {
+            out.style.color = '#333';
+            out.textContent = 'Chưa đăng nhập.';
+            nav.innerHTML = `
+                <a href="/register.html">Register</a> |
+                <a href="/login.html">Login</a>
+            `;
+        }
     }
+
+    await updateUI();
 });

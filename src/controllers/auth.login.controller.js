@@ -128,3 +128,110 @@ exports.getRememberEmail = async (req, res) => {
     const value = req.cookies?.remember_email || '';
     return res.json({ remember_email: value });
 };
+// PATCH/PUT/POST -> cập nhật name + phone + address
+
+exports.validateUpdateProfile = [
+    body('name').trim().notEmpty().withMessage('Name is required'),
+    body('phone').optional({ checkFalsy: true }).isLength({ max: 20 }).withMessage('Phone quá dài'),
+    body('dob').optional({ checkFalsy: true }).isISO8601().withMessage('Ngày sinh không hợp lệ'),
+    body('address').optional({ checkFalsy: true }).isLength({ max: 255 }).withMessage('Địa chỉ quá dài'),
+];
+
+/* ====== Handler cập nhật profile (MySQL transaction) ====== */
+exports.updateProfileHandler = async (req, res) => {
+    const uid = req.user?.id || req.session?.user?.id;
+    if (!uid) return res.status(401).json({ message: 'Chưa đăng nhập' });
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ message: 'Dữ liệu không hợp lệ', errors: errors.array() });
+    }
+
+    const { name, phone, dob, address } = req.body;
+
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        // 1) Update tên trong users
+        await conn.execute(
+            'UPDATE users SET name = ? WHERE id = ? AND deleted = FALSE',
+            [name, uid]
+        );
+
+        // 2) Upsert profiles (vì user_id chưa unique nên làm SELECT -> UPDATE/INSERT)
+        const [pRows] = await conn.execute(
+            'SELECT id FROM profiles WHERE user_id = ? LIMIT 1',
+            [uid]
+        );
+
+        if (pRows.length) {
+            // UPDATE
+            await conn.execute(
+                `UPDATE profiles 
+           SET birth_date = ?, phone = ?, address = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE user_id = ?`,
+                [dob || null, phone || null, address || null, uid]
+            );
+        } else {
+            // INSERT
+            await conn.execute(
+                `INSERT INTO profiles (birth_date, phone, address, user_id)
+         VALUES (?, ?, ?, ?)`,
+                [dob || null, phone || null, address || null, uid]
+            );
+        }
+
+        await conn.commit();
+
+        // Lấy lại dữ liệu mới
+        const [rows] = await conn.execute(
+            `SELECT 
+          u.id, u.email, u.name, u.role, u.status, u.created_at,
+          p.birth_date AS dob, p.phone, p.address
+       FROM users u
+       LEFT JOIN profiles p ON p.user_id = u.id
+       WHERE u.id = ? AND u.deleted = FALSE
+       LIMIT 1`,
+            [uid]
+        );
+
+        // Đồng bộ session để /api/auth/me và FE thấy ngay
+        const updated = rows[0];
+        if (req.session?.user) {
+            req.session.user.name  = updated.name;
+            req.session.user.email = updated.email;
+            req.session.user.role  = updated.role;
+        }
+        if (req.user) {
+            req.user.name  = updated.name;
+            req.user.email = updated.email;
+            req.user.role  = updated.role;
+        }
+
+        if (req.session?.save) {
+            return req.session.save(() =>
+                res.json({ message: 'Cập nhật profile thành công', user: updated })
+            );
+        }
+        return res.json({ message: 'Cập nhật profile thành công', user: updated });
+    } catch (err) {
+        await conn.rollback();
+
+        // Lỗi trùng phone (UNIQUE on profiles.phone)
+        if (err && err.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ message: 'Số điện thoại đã tồn tại' });
+        }
+
+        console.error('[UPDATE_PROFILE_ERROR]', err);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    } finally {
+        conn.release();
+    }
+};
+
+/* ====== Export mảng middleware cho route PUT ====== */
+exports.updateProfile = [
+    ...exports.validateUpdateProfile,
+    exports.updateProfileHandler,
+];
